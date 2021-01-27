@@ -35,6 +35,8 @@ from deeplabcut.pose_estimation_tensorflow.nnet.net_factory import pose_net
 from deeplabcut.pose_estimation_tensorflow.util.logging import setup_logging
 
 
+GPU_USAGE = float(os.getenv("DLC_GPU_USAGE", default="1.0"))  # part of fix for memory issues with our GPU and the DLC docker2.0
+
 class LearningRate(object):
     def __init__(self, cfg):
         self.steps = cfg.multi_step
@@ -216,7 +218,13 @@ def train(
         config.gpu_options.allow_growth = True
         sess = TF.Session(config=config)
     else:
-        sess = TF.Session()
+        #tgf added
+        print("USING MEMORY PATCH")  # part of fix for memory issues with our GPU and the DLC docker2.0
+        config = TF.ConfigProto()  # part of fix for memory issues with our GPU and the DLC docker2.0
+        config.gpu_options.per_process_gpu_memory_fraction = GPU_USAGE  # part of fix for memory issues with our GPU and the DLC docker2.0
+        sess = TF.Session(config=config)  # part of fix for memory issues with our GPU and the DLC docker2.0
+        #Default
+        #sess = TF.Session()
 
     coord, thread = start_preloading(sess, enqueue_op, dataset, placeholders)
     train_writer = TF.summary.FileWriter(cfg.log_dir, sess.graph)

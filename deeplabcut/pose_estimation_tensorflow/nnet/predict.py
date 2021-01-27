@@ -21,6 +21,7 @@ Pretraining boosts out-of-domain robustness for pose estimation
 by Alexander Mathis, Mert Yüksekgönül, Byron Rogers, Matthias Bethge, Mackenzie W. Mathis
 https://arxiv.org/abs/1909.11229
 """
+import os
 
 import numpy as np
 import tensorflow as tf
@@ -31,6 +32,8 @@ if int(vers[0]) == 1 and int(vers[1]) > 12:
 else:
     TF = tf
 from deeplabcut.pose_estimation_tensorflow.nnet.net_factory import pose_net
+
+GPU_USAGE = float(os.getenv("DLC_GPU_USAGE", default="1.0"))  # part of fix for memory issues with our GPU and the DLC docker2.0
 
 
 def setup_pose_prediction(cfg):
@@ -46,7 +49,13 @@ def setup_pose_prediction(cfg):
         outputs.append(net_heads["pairwise_pred"])
 
     restorer = TF.train.Saver()
-    sess = TF.Session()
+    #tgf added
+    print("USING MEMORY PATCH")  # part of fix for memory issues with our GPU and the DLC docker2.0
+    config = TF.ConfigProto()  # part of fix for memory issues with our GPU and the DLC docker2.0
+    config.gpu_options.per_process_gpu_memory_fraction = GPU_USAGE  # part of fix for memory issues with our GPU and the DLC docker2.0
+    sess = TF.Session(config=config)  # part of fix for memory issues with our GPU and the DLC docker2.0
+    #Default DLC
+    #sess = TF.Session()
     sess.run(TF.global_variables_initializer())
     sess.run(TF.local_variables_initializer())
 
@@ -209,7 +218,13 @@ def setup_GPUpose_prediction(cfg):
     outputs = [net_heads["pose"]]
 
     restorer = tf.train.Saver()
-    sess = tf.Session()
+    #tfg added
+    print("USING MEMORY PATCH")  # part of fix for memory issues with our GPU and the DLC docker2.0
+    config = tf.ConfigProto()  # part of fix for memory issues with our GPU and the DLC docker2.0
+    config.gpu_options.per_process_gpu_memory_fraction = GPU_USAGE  # part of fix for memory issues with our GPU and the DLC docker2.0
+    sess = tf.Session(config=config)  # part of fix for memory issues with our GPU and the DLC docker2.0
+    #Default DLC
+    #sess = tf.Session()
 
     sess.run(tf.global_variables_initializer())
     sess.run(tf.local_variables_initializer())
